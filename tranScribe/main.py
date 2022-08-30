@@ -167,7 +167,44 @@ def main(SOURCE='example_dir'):
     with open('transcription.json', 'w') as fp:
         json.dump(scribe.doctree, fp)
 
-
+import os
+import pprint
 
 if __name__ == "__main__":
-    main()
+    #main()
+    
+
+    pp = pprint.PrettyPrinter()
+
+
+    def path_to_dict(path, d):
+
+        name = os.path.basename(path)
+        if os.path.isdir(path):
+            #if not already in children:
+            if name not in d['dirs']:
+                d['dirs'][name] = {'name':name,'type':'folder', 'dirs':{}}
+            for x in os.listdir(path):
+                path_to_dict(os.path.join(path,x), d['dirs'][name])
+
+        else: #if ends with .py
+            d['dirs'][name]={'name':name, 'type':'file','dirs':{
+                    'functions' : {'name':name+'_'+'functions', 'type':'functions' },
+                    'classes' : {'name':name+'_'+'classes', 'type':'classes' }
+                }}
+                #handle_files(d['dirs'][name], name)
+        return d
+
+    def pathto_dict(path):
+        for root, dirs, files in os.walk(path):
+            tree = {"name": root, "type":"folder", "children":[]}
+            tree["children"].extend([pathto_dict(os.path.join(root, d)) for d in dirs])
+            tree["children"].extend([{"name":os.path.join(root, f), "type":"file"} for f in files])
+            return tree
+
+    mydict = pathto_dict('example_dir')
+
+    #mydict = path_to_dict('example_dir', d = {'name':'source_dir','type':'module','dirs':{}})
+
+
+    pp.pprint(mydict)
