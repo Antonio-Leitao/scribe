@@ -99,19 +99,29 @@ class Scribe:
         self.separate_classes = True
         self.separate_functions = False
     
-    def transcribe(self, path):
-        self.doctree = self.get_doctree(path)
-        with open('transcription.json', 'w') as fp:
+    def transcribe(self, in_path,out_path):
+        #do a check here?
+        self.pkgname = os.path.split(in_path)[-1]
+        self.doctree = self.get_doctree(in_path)
+        with open(out_path, 'w') as fp:
             json.dump(self.doctree, fp)
         return self
 
+    def _clean_href(self, root):
+        href = root.removeprefix(self.pkgname)
+        if len(href)==0:
+            href='/'
+        return href
+
     def get_doctree(self,path): 
         for root, dirs, files in os.walk(path):
-            doctree = {"href": root, "type":"folder", "children":[]}
+            doctree = {"href": self._clean_href(root), "type":"folder", "children":[]}
             doctree["children"].extend([self.get_doctree(os.path.join(root, d)) for d in dirs])
             for f in files:
+                if not f.endswith('.py'):
+                    continue
                 object = _importfile(os.path.join(root, f))
-                self.document(object, child_list=doctree['children'], root = root)
+                self.document(object, child_list=doctree['children'], root = self._clean_href(root))
             return doctree
 
     def document(self, object, child_list , root):
@@ -134,7 +144,7 @@ class Scribe:
         module_info = _getdata(object)
         module_info['type'] = 'module'
         module_info['href'] = root+'/'+module_info['NAME']
-        module_info['path'] = module_info['href'].replace('/','.')
+        module_info['path'] = self.pkgname+module_info['href'].replace('/','.')
 
         module_info['children']=[]
         #if its a class or a function document them too (maybe add more stuff here in future)
@@ -148,7 +158,7 @@ class Scribe:
         class_info = _getdata(object)
         class_info['type'] = 'class'
         class_info['href'] = root + '/' + class_info['NAME']
-        class_info['path'] = class_info['href'].replace('/','.')
+        class_info['path'] = self.pkgname+class_info['href'].replace('/','.')
         if not self.separate_classes:
             class_info['href'] = root + '/'+'classes'
 
@@ -165,7 +175,7 @@ class Scribe:
         routine_info = _getdata(object)
         routine_info['type'] = 'function'
         routine_info['href'] = root + '/' + routine_info['NAME']
-        routine_info['path'] = routine_info['href'].replace('/','.')
+        routine_info['path'] = self.pkgname+routine_info['href'].replace('/','.')
         if not self.separate_functions:
             routine_info['href'] = root + '/'+'routines'
         child_list.append(routine_info)
@@ -173,5 +183,5 @@ class Scribe:
 
 
 if __name__ == "__main__":
-    scribe = Scribe().transcribe('example_dir')
+    scribe = Scribe().transcribe('example_dir','deScribe/src/data/transcription.json')
 
