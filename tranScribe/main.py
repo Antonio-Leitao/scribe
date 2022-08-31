@@ -51,6 +51,8 @@ def _getdata(object):
     branch = {}
     if hasattr(object, '__name__'):
         branch['NAME'] = str(object.__name__)
+    if callable(object):
+        branch['SIGNATURE'] = str(inspect.signature(object))
     if hasattr(object, '__doc__'):
         components = describe(inspect.getdoc(object))
         branch['DOC'] = components
@@ -94,117 +96,82 @@ def _importfile(path):
 class Scribe:
 
     def __init__(self):
-        self.doctree={}
-
-    def docmodule(self, object, module_path):
-        """Produce text documentation for a given module object."""
-        module_breadcrumbs = module_path[:-3].replace("/", ".")
-        module_name = object.__name__# ignore the passed-in name
-        #maybe dome synopse here too?
-
-        self.doctree[module_path]={'name':module_name,'path':module_path[:-3]}
-        #get list of classes in module
-        classes = []
-        for key, value in inspect.getmembers(object, _isclass):
-            classes.append((key, value))
-
-        #get list of functions in module
-        funcs = []
-        for key, value in inspect.getmembers(object, inspect.isroutine):
-            funcs.append((key, value))
-
-        #get info of the classes and methods (missing hierarchy!)
-        if classes:
-            self.doctree[module_path]['classes'] = []
-            for key, value in classes:
-                branch = _getdata(value)
-                branch['CRUMBS']=module_breadcrumbs +'.'+ branch['NAME']
-                
-                #get methods and documentize them
-                methods = []
-                for name, method in inspect.getmembers(value, inspect.isfunction):
-                    #don't add hidden methods
-                    if name.startswith('_'):
-                        continue
-                    methods.append((name, method))
-
-                if methods:
-                    branch['METHODS'] = []
-                    for name, method in methods:
-                        method_branch = _getdata(method)
-                        branch['METHODS'].append(method_branch)
-                        
-                self.doctree[module_path]['classes'].append(branch)
-
-        #get infot on functions
-        if funcs:
-            self.doctree[module_path]['functions'] = []
-            for key, value in funcs:
-                branch = _getdata(value)
-                branch['CRUMBS']=module_breadcrumbs + '.' + branch['NAME']
-                self.doctree[module_path]['functions'].append(branch)
-      
+        self.separate_classes = True
+        self.separate_functions = False
+    
+    def transcribe(self, path):
+        self.doctree = self.get_doctree(path)
+        with open('transcription.json', 'w') as fp:
+            json.dump(self.doctree, fp)
         return self
 
+    def get_doctree(self,path): 
+        for root, dirs, files in os.walk(path):
+            doctree = {"href": root, "type":"folder", "children":[]}
+            doctree["children"].extend([self.get_doctree(os.path.join(root, d)) for d in dirs])
+            for f in files:
+                object = _importfile(os.path.join(root, f))
+                self.document(object, child_list=doctree['children'], root = root)
+            return doctree
+
+    def document(self, object, child_list , root):
+        """Generate documentation for an object."""
+        try:
+            if inspect.ismodule(object): return self.docmodule(object,child_list,root)
+            if _isclass(object): return self.docclass(object,child_list,root)
+            if inspect.isroutine(object): return self.docroutine(object,child_list,root)
+        except AttributeError:
+            self.fail(object)
+
+    def fail(self, object):
+        """Raise an exception for unimplemented types."""
+        message = "don't know how to document object%s of type %s" % (
+            object.__name__, type(object).__name__)
+        raise TypeError(message)
 
 
+    def docmodule(self, object, child_list, root):
+        module_info = _getdata(object)
+        module_info['type'] = 'module'
+        module_info['href'] = root+'/'+module_info['NAME']
+        module_info['path'] = module_info['href'].replace('/','.')
+
+        module_info['children']=[]
+        #if its a class or a function document them too (maybe add more stuff here in future)
+        for key, value in inspect.getmembers(object, _isclass) or inspect.getmembers(object, inspect.isroutine):
+            self.document(value, module_info['children'], module_info['href'])
+
+        child_list.append(module_info)
 
 
-def main(SOURCE='example_dir'):
+    def docclass(self, object, child_list, root):
+        class_info = _getdata(object)
+        class_info['type'] = 'class'
+        class_info['href'] = root + '/' + class_info['NAME']
+        class_info['path'] = class_info['href'].replace('/','.')
+        if not self.separate_classes:
+            class_info['href'] = root + '/'+'classes'
 
-    scribe = Scribe()
-    for root, dirs, files in os.walk(SOURCE, topdown='true'):
-
-        for filename in files:
-            if not filename.endswith(".py"):
+        class_info['METHODS'] = []
+        #get methods of class:
+        for name, method in inspect.getmembers(object, inspect.isfunction): 
+            #don't add hidden methods
+            if name.startswith('_'):
                 continue
-            else:
-                module_path = os.path.join(root, filename)
-                object = _importfile(module_path)
-                scribe.docmodule(object, module_path)
+            class_info['METHODS'].append(_getdata(method))
+        child_list.append(class_info)
+
+    def docroutine(self,object,child_list,root):
+        routine_info = _getdata(object)
+        routine_info['type'] = 'function'
+        routine_info['href'] = root + '/' + routine_info['NAME']
+        routine_info['path'] = routine_info['href'].replace('/','.')
+        if not self.separate_functions:
+            routine_info['href'] = root + '/'+'routines'
+        child_list.append(routine_info)
 
 
-    with open('transcription.json', 'w') as fp:
-        json.dump(scribe.doctree, fp)
-
-import os
-import pprint
 
 if __name__ == "__main__":
-    #main()
-    
+    scribe = Scribe().transcribe('example_dir')
 
-    pp = pprint.PrettyPrinter()
-
-
-    def path_to_dict(path, d):
-
-        name = os.path.basename(path)
-        if os.path.isdir(path):
-            #if not already in children:
-            if name not in d['dirs']:
-                d['dirs'][name] = {'name':name,'type':'folder', 'dirs':{}}
-            for x in os.listdir(path):
-                path_to_dict(os.path.join(path,x), d['dirs'][name])
-
-        else: #if ends with .py
-            d['dirs'][name]={'name':name, 'type':'file','dirs':{
-                    'functions' : {'name':name+'_'+'functions', 'type':'functions' },
-                    'classes' : {'name':name+'_'+'classes', 'type':'classes' }
-                }}
-                #handle_files(d['dirs'][name], name)
-        return d
-
-    def pathto_dict(path):
-        for root, dirs, files in os.walk(path):
-            tree = {"name": root, "type":"folder", "children":[]}
-            tree["children"].extend([pathto_dict(os.path.join(root, d)) for d in dirs])
-            tree["children"].extend([{"name":os.path.join(root, f), "type":"file"} for f in files])
-            return tree
-
-    mydict = pathto_dict('example_dir')
-
-    #mydict = path_to_dict('example_dir', d = {'name':'source_dir','type':'module','dirs':{}})
-
-
-    pp.pprint(mydict)
