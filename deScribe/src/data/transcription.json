@@ -106,8 +106,8 @@
         "description": "<div class=\"section\" id=\"description\"><div class=\"synopse\"><p>Docstring for the example.py module.</p></div>,<p>Modules names should have short, all-lowercase names.  The module name may\nhave underscores if this improves readability.</p></div>"
       },
       "type": "module",
-      "href": "//utils_module",
-      "path": "example_dir..utils_module",
+      "href": "/utils_module",
+      "path": "example_dir.utils_module",
       "children": [
         {
           "NAME": "bar",
@@ -124,8 +124,8 @@
             "examples": "<div class=\"section\" id=\"examples\">\n <h1>\n  Examples\n </h1>\n <p>\n  These are written in doctest format, and should illustrate how to\nuse the function.\n </p>\n <pre class=\"doctest-block\">\n&gt;&gt;&gt; a = [1, 2, 3]\n&gt;&gt;&gt; print([x + 3 for x in a])\n[4, 5, 6]\n&gt;&gt;&gt; print(\"a\\nb\")\na\nb\n</pre>\n</div>\n"
           },
           "type": "function",
-          "href": "//utils_module/routines",
-          "path": "example_dir..utils_module.bar"
+          "href": "/utils_module/routines",
+          "path": "example_dir.utils_module.bar"
         },
         {
           "NAME": "foo",
@@ -142,8 +142,8 @@
             "examples": "<div class=\"section\" id=\"examples\">\n <h1>\n  Examples\n </h1>\n <p>\n  These are written in doctest format, and should illustrate how to\nuse the function.\n </p>\n <pre class=\"doctest-block\">\n&gt;&gt;&gt; a = [1, 2, 3]\n&gt;&gt;&gt; print([x + 3 for x in a])\n[4, 5, 6]\n&gt;&gt;&gt; print(\"a\\nb\")\na\nb\n</pre>\n</div>\n"
           },
           "type": "function",
-          "href": "//utils_module/routines",
-          "path": "example_dir..utils_module.foo"
+          "href": "/utils_module/routines",
+          "path": "example_dir.utils_module.foo"
         }
       ]
     },
@@ -153,8 +153,8 @@
         "description": "<div class=\"section\" id=\"description\"><div class=\"synopse\"><p>Docstring for the example.py module.</p></div>,<p>Modules names should have short, all-lowercase names.  The module name may\nhave underscores if this improves readability.</p></div>"
       },
       "type": "module",
-      "href": "//module_many_classes",
-      "path": "example_dir..module_many_classes",
+      "href": "/module_many_classes",
+      "path": "example_dir.module_many_classes",
       "children": [
         {
           "NAME": "DBScan",
@@ -171,8 +171,8 @@
             "examples": "<div class=\"section\" id=\"examples\">\n <h1>\n  Examples\n </h1>\n <p>\n  These are written in doctest format, and should illustrate how to\nuse the function.\n </p>\n <pre class=\"doctest-block\">\n&gt;&gt;&gt; a = [1, 2, 3]\n&gt;&gt;&gt; print([x + 3 for x in a])\n[4, 5, 6]\n&gt;&gt;&gt; print(\"a\\nb\")\na\nb\n</pre>\n</div>\n"
           },
           "type": "class",
-          "href": "//module_many_classes/DBScan",
-          "path": "example_dir..module_many_classes.DBScan",
+          "href": "/module_many_classes/DBScan",
+          "path": "example_dir.module_many_classes.DBScan",
           "METHODS": [
             {
               "NAME": "fit",
@@ -206,8 +206,8 @@
             "examples": "<div class=\"section\" id=\"examples\">\n <h1>\n  Examples\n </h1>\n <p>\n  These are written in doctest format, and should illustrate how to\nuse the function.\n </p>\n <pre class=\"doctest-block\">\n&gt;&gt;&gt; a = [1, 2, 3]\n&gt;&gt;&gt; print([x + 3 for x in a])\n[4, 5, 6]\n&gt;&gt;&gt; print(\"a\\nb\")\na\nb\n</pre>\n</div>\n"
           },
           "type": "class",
-          "href": "//module_many_classes/KMeans",
-          "path": "example_dir..module_many_classes.KMeans",
+          "href": "/module_many_classes/KMeans",
+          "path": "example_dir.module_many_classes.KMeans",
           "METHODS": [
             {
               "NAME": "fit",
